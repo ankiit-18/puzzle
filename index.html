@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Memory Grid Game</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🧠 Memory Grid Game</h1>
+  <div id="timer">⏱️ Time: 00:00</div>
+
+  <div id="best-score">🏆 Best Time: --:--</div>
+
+  <div class="controls">
+    <label>Grid Size:
+      <select id="grid-size">
+        <option value="2">2x2</option>
+        <option value="3" selected>3x3</option>
+        <option value="4">4x4</option>
+        <option value="5">5x5</option>
+      </select>
+    </label>
+
+    <label>Mode:
+      <select id="mode">
+        <option value="photo" selected>Photo</option>
+        <option value="number">Number</option>
+      </select>
+    </label>
+
+    <button onclick="startGame()">Start Game</button>
+  </div>
+
+  <div id="grid" class="grid"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
