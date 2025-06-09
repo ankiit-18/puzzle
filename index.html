@@ -32,19 +32,26 @@
   </div>
 
   <div id="grid" class="grid"></div>
-  <div id="game-rules" style="position: fixed; bottom: 10px; width: 100%; text-align: center; background: #f9f9f9; padding: 15px; border-top: 1px solid #ccc; font-family: Arial, sans-serif; font-size: 16px; color: #333;">
-    <div id="game-rules" style="
-    position: fixed; 
-    bottom: 10px; 
-    width: 100%; 
-    text-align: center; 
-    background: #f9f9f9; 
-    padding: 15px; 
-    border-top: 1px solid #ccc; 
-    font-family: Arial, sans-serif; 
-    font-size: 16px; 
+
+  <!-- Toggle Button -->
+  <button id="toggle-rules" style="position: fixed; bottom: 90px; right: 20px; z-index: 1000;">
+    Show/Hide Rules
+  </button>
+
+  <!-- Game Rules -->
+  <div id="game-rules" style="
+    position: fixed;
+    bottom: 10px;
+    width: 100%;
+    text-align: center;
+    background: #f9f9f9;
+    padding: 15px;
+    border-top: 1px solid #ccc;
+    font-family: Arial, sans-serif;
+    font-size: 16px;
     color: #333;
     box-sizing: border-box;
+    display: block;
   ">
     <strong>Welcome to the Memory Challenge!</strong><br>
     1. You will see a grid of photos or numbers displayed in a specific order.<br>
@@ -54,9 +61,18 @@
     5. Click correctly to win! One wrong click and the game ends. Good luck!<br><br>
     <em>Created by Ankit Kumar</em>
   </div>
-  
-  
-  
+
+  <!-- Script that requires DOM elements -->
+  <script>
+    const rules = document.getElementById("game-rules");
+    const toggleBtn = document.getElementById("toggle-rules");
+
+    toggleBtn.addEventListener("click", () => {
+      rules.style.display = rules.style.display === "none" ? "block" : "none";
+    });
+  </script>
+
+  <!-- Your main game logic -->
   <script src="script.js"></script>
 </body>
 </html>

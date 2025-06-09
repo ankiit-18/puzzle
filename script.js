@@ -54,7 +54,7 @@ function startGame() {
     for (let i = 0; i < total; i++) {
       const tile = document.createElement("div");
       tile.className = "tile";
-      tile.dataset.index = i;
+      tile.dataset.content = images[i];
       const img = document.createElement("img");
       img.src = images[i];
       tile.appendChild(img);
@@ -65,9 +65,9 @@ function startGame() {
     for (let i = 0; i < total; i++) {
       const tile = document.createElement("div");
       tile.className = "tile";
-      tile.dataset.index = i;
       const num = Math.floor(1000 + Math.random() * 9000);
       tile.textContent = num;
+      tile.dataset.content = num;
       tile.onclick = () => handleTileClick(tile);
       grid.appendChild(tile);
     }
@@ -75,127 +75,84 @@ function startGame() {
 
   startTimer();
   loadBestScore();
-
-}
-
-function shuffleTiles() {
-  const grid = document.getElementById("grid");
-  const tiles = Array.from(grid.children);
-  for (let tile of tiles) tile.classList.remove("disabled");
-
-  const shuffledTiles = tiles.sort(() => Math.random() - 0.5);
-  grid.innerHTML = "";
-  shuffledTiles.forEach(tile => grid.appendChild(tile));
-  shuffled = true;
+  loadOverallBest();
 }
 
 function handleTileClick(tile) {
-  const index = parseInt(tile.dataset.index);
-
   if (!shuffled) {
-    order.push(index);
+    order.push(tile.dataset.content);
     tile.classList.add("disabled");
 
     if (order.length === document.querySelectorAll(".tile").length) {
       setTimeout(shuffleTiles, 500);
     }
   } else {
-    const expectedIndex = order[userOrder.length];
-    const mode = document.getElementById("mode").value;
+    const expected = order[userOrder.length];
+    const actual = tile.dataset.content;
+    userOrder.push(actual);
+    tile.classList.add("disabled");
 
-    if (index !== expectedIndex) {
-      userOrder.push(index);
+    if (expected !== actual) {
       stopTimer();
-      showSequencesAndLose(mode);
+      showSequencesAndLose();
       return;
     }
 
-    userOrder.push(index);
-    tile.classList.add("disabled");
-
     if (userOrder.length === order.length) {
-        stopTimer();
-        updateBestScore(secondsElapsed); // ✅ Update best time in localStorage
-        setTimeout(() => {
-          alert(`🎉 You Win!\nTime: ${formatTime(secondsElapsed)}`);
-        }, 300);
-      }
-      
-  }
-}
-
-function getKeyForBestScore() {
-    const size = document.getElementById("grid-size").value;
-    const mode = document.getElementById("mode").value;
-    return `best-${size}x${size}-${mode}`;
-  }
-
-  function loadBestScore() {
-    const key = getKeyForBestScore();
-    const bestTime = localStorage.getItem(key);
-    document.getElementById("best-score").textContent =
-      bestTime ? `🏆 Best Time: ${formatTime(parseInt(bestTime))}` : `🏆 Best Time: --:--`;
-  }
-  
-  function updateBestScore(currentTime) {
-    const key = getKeyForBestScore();
-    const bestTime = localStorage.getItem(key);
-    if (!bestTime || currentTime < parseInt(bestTime)) {
-      localStorage.setItem(key, currentTime);
-      loadBestScore();
+      stopTimer();
+      updateBestScore(secondsElapsed);
+      updateOverallBest(secondsElapsed);
+      setTimeout(() => {
+        alert(`🎉 You Win!\nTime: ${formatTime(secondsElapsed)}`);
+      }, 300);
     }
   }
-
-  function loadOverallBest() {
-  const best = localStorage.getItem("overall-best");
-  document.getElementById("overall-best").textContent =
-    best ? `🌟 Overall Best: ${formatTime(parseInt(best))}` : `🌟 Overall Best: --:--`;
 }
 
-function updateOverallBest(currentTime) {
-  const best = localStorage.getItem("overall-best");
-  if (!best || currentTime < parseInt(best)) {
-    localStorage.setItem("overall-best", currentTime);
-    loadOverallBest();
-  }
+function shuffleTiles() {
+  const grid = document.getElementById("grid");
+  const tiles = Array.from(grid.children);
+  for (let tile of tiles) tile.classList.remove("disabled");
+  const shuffledTiles = tiles.sort(() => Math.random() - 0.5);
+  grid.innerHTML = "";
+  shuffledTiles.forEach(tile => grid.appendChild(tile));
+  shuffled = true;
 }
 
-  
-
-function showSequencesAndLose(mode) {
-  const tiles = Array.from(document.querySelectorAll(".tile"));
-
-  const getContent = (idx) => {
-    const tile = tiles[idx];
-    if (mode === "photo") {
-      return tile.querySelector("img")?.src || "🖼️";
+function showSequencesAndLose() {
+    const container = document.getElementById("result-container");
+    if (!container) {
+      // Create a container if it doesn't exist
+      const div = document.createElement("div");
+      div.id = "result-container";
+      div.style.textAlign = "center";
+      div.style.fontFamily = "sans-serif";
+      div.style.marginTop = "20px";
+      document.body.appendChild(div);
+      showLossContent(div);
     } else {
-      return tile.textContent;
+      container.innerHTML = ""; // Clear previous content
+      showLossContent(container);
     }
-  };
-
-  const correctSeq = order.map(i => getContent(i));
-  const userSeq = userOrder.map(i => getContent(i));
-
-  let html = `<h3>❌ You Lost!</h3><p><b>Time:</b> ${formatTime(secondsElapsed)}</p>`;
-  html += `<b>✅ Correct Sequence:</b><br>`;
-  html += renderSequence(correctSeq, mode);
-  html += `<br><b>❌ Your Sequence:</b><br>`;
-  html += renderSequence(userSeq, mode);
-
-  const win = window.open("", "", "width=600,height=600");
-  win.document.write(`<html><head><title>Result</title></head><body style="font-family:Arial;text-align:center;">${html}</body></html>`);
-  win.document.close();
-
-  document.querySelectorAll(".tile").forEach(t => t.classList.add("disabled"));
-}
-
-function renderSequence(seq, mode) {
-  if (mode === "photo") {
-    return seq.map(src => `<img src="${src}" width="60" height="60" style="margin:3px;border:1px solid #ccc;">`).join("");
-  } else {
-    return seq.map(num => `<span style="display:inline-block;width:60px;height:60px;line-height:60px;margin:3px;background:#eee;border:1px solid #ccc;">${num}</span>`).join("");
   }
+  
+  function showLossContent(container) {
+    const html = `
+      <h3 style="color: red;">❌ You Lost!</h3>
+      <p><b>Time:</b> ${formatTime(secondsElapsed)}</p>
+      <b>✅ Correct Order:</b><br>${renderSequence(order)}
+      <br><b>❌ Your Order:</b><br>${renderSequence(userOrder)}
+    `;
+    container.innerHTML = html;
+  }
+  
+
+function renderSequence(seq) {
+  return seq.map(val =>
+    val.startsWith("http") ?
+    `<img src="${val}" width="60" height="60" style="margin:3px;border:1px solid #ccc;">` :
+    `<span style="display:inline-block;width:60px;height:60px;line-height:60px;margin:3px;background:#eee;border:1px solid #ccc;">${val}</span>`
+  ).join("");
 }
 
 function startTimer() {
@@ -213,12 +170,47 @@ function stopTimer() {
 }
 
 function updateTimerDisplay() {
-  document.getElementById("timer").textContent =
-    `⏱️ Time: ${formatTime(secondsElapsed)}`;
+  document.getElementById("timer").textContent = `⏱️ Time: ${formatTime(secondsElapsed)}`;
 }
 
 function formatTime(sec) {
-  const minutes = Math.floor(sec / 60);
-  const seconds = sec % 60;
-  return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+  const min = Math.floor(sec / 60);
+  const s = sec % 60;
+  return `${min.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+function getKeyForBestScore() {
+  const size = document.getElementById("grid-size").value;
+  const mode = document.getElementById("mode").value;
+  return `best-${size}x${size}-${mode}`;
+}
+
+function loadBestScore() {
+  const key = getKeyForBestScore();
+  const best = localStorage.getItem(key);
+  document.getElementById("best-score").textContent =
+    best ? `🏆 Best Time: ${formatTime(parseInt(best))}` : `🏆 Best Time: --:--`;
+}
+
+function updateBestScore(currentTime) {
+  const key = getKeyForBestScore();
+  const best = localStorage.getItem(key);
+  if (!best || currentTime < parseInt(best)) {
+    localStorage.setItem(key, currentTime);
+    loadBestScore();
+  }
+}
+
+function loadOverallBest() {
+  const best = localStorage.getItem("overall-best");
+  document.getElementById("overall-best").textContent =
+    best ? `🌟 Overall Best: ${formatTime(parseInt(best))}` : `🌟 Overall Best: --:--`;
+}
+
+function updateOverallBest(currentTime) {
+  const best = localStorage.getItem("overall-best");
+  if (!best || currentTime < parseInt(best)) {
+    localStorage.setItem("overall-best", currentTime);
+    loadOverallBest();
+  }
 }
