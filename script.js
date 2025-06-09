@@ -112,7 +112,7 @@ function handleTileClick(tile) {
       updateBestScore(secondsElapsed);
       updateOverallBest(secondsElapsed);
       setTimeout(() => {
-        alert(`🎉 You Win!\nTime: ${formatTime(secondsElapsed)}`);
+        alert(`🎉 You Won!\nTime: ${formatTime(secondsElapsed)}`);
       }, 300);
     }
   }
