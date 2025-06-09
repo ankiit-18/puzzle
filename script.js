@@ -34,7 +34,12 @@ const imageUrls = [
     "https://upload.wikimedia.org/wikipedia/commons/thumb/9/96/Reinbukken_p%C3%A5_frisk_gr%C3%B8nt_beite._-_panoramio.jpg/1200px-Reinbukken_p%C3%A5_frisk_gr%C3%B8nt_beite._-_panoramio.jpg",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSSuuaDC1Yxag8hdROQQeKDkoWXINvjbsngTw&s",
     "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQG96uZNceaPtBvfNHtnZPtUyWJd8NUXVyIAQ&s"
-  ];
+];
+
+// Sound effect files (make sure these paths are correct in your project)
+const clickSound = new Audio('/Users/ankitkumar/java_script/sound/click.mp3');
+const winSound = new Audio('/Users/ankitkumar/java_script/sound/win.mp3');
+const loseSound = new Audio('/Users/ankitkumar/java_script/sound/lose.mp3');
 
 function startGame() {
   const size = parseInt(document.getElementById("grid-size").value);
@@ -79,6 +84,8 @@ function startGame() {
 }
 
 function handleTileClick(tile) {
+  clickSound.play();
+
   if (!shuffled) {
     order.push(tile.dataset.content);
     tile.classList.add("disabled");
@@ -94,12 +101,14 @@ function handleTileClick(tile) {
 
     if (expected !== actual) {
       stopTimer();
+      loseSound.play();
       showSequencesAndLose();
       return;
     }
 
     if (userOrder.length === order.length) {
       stopTimer();
+      winSound.play();
       updateBestScore(secondsElapsed);
       updateOverallBest(secondsElapsed);
       setTimeout(() => {
@@ -120,43 +129,49 @@ function shuffleTiles() {
 }
 
 function showSequencesAndLose() {
-    const container = document.getElementById("result-container");
-    if (!container) {
-      // Create a container if it doesn't exist
-      const div = document.createElement("div");
-      div.id = "result-container";
-      div.style.textAlign = "center";
-      div.style.fontFamily = "sans-serif";
-      div.style.marginTop = "20px";
-      document.body.appendChild(div);
-      showLossContent(div);
-    } else {
-      container.innerHTML = ""; // Clear previous content
-      showLossContent(container);
-    }
+  const container = document.getElementById("result-container");
+  if (!container) {
+    const div = document.createElement("div");
+    div.id = "result-container";
+    div.style.textAlign = "center";
+    div.style.fontFamily = "sans-serif";
+    div.style.marginTop = "20px";
+    document.body.appendChild(div);
+    showLossContent(div);
+  } else {
+    container.innerHTML = "";
+    showLossContent(container);
   }
-  
-  function showLossContent(container) {
-    const html = `
-      <h3 style="color: red;">❌ You Lost!</h3>
-      <p><b>Time:</b> ${formatTime(secondsElapsed)}</p>
-      <b>✅ Correct Order:</b><br>${renderSequence(order)}
-      <br><b>❌ Your Order:</b><br>${renderSequence(userOrder)}
-    `;
-    container.innerHTML = html;
-  }
-  
+}
+
+function showLossContent(container) {
+  const html = `
+    <h3 style="color: red;">❌ You Lost!</h3>
+    <p><b>Time:</b> ${formatTime(secondsElapsed)}</p>
+    <b>✅ Correct Order:</b><br>${renderSequence(order)}
+    <br><br>
+    <b>❌ Your Order:</b><br>${renderSequence(userOrder)}
+    <br><br>
+    <button onclick="restartGame()">Restart</button>
+  `;
+  container.innerHTML = html;
+}
 
 function renderSequence(seq) {
-  return seq.map(val =>
-    val.startsWith("http") ?
-    `<img src="${val}" width="60" height="60" style="margin:3px;border:1px solid #ccc;">` :
-    `<span style="display:inline-block;width:60px;height:60px;line-height:60px;margin:3px;background:#eee;border:1px solid #ccc;">${val}</span>`
-  ).join("");
+  return seq.map(item => {
+    if (typeof item === "string" && item.startsWith("http")) {
+      return `<img src="${item}" width="50" style="margin:2px;border-radius:4px;">`;
+    } else {
+      return `<span style="margin: 5px; font-weight: bold;">${item}</span>`;
+    }
+  }).join(" ");
+}
+
+function restartGame() {
+  location.reload();
 }
 
 function startTimer() {
-  clearInterval(timerInterval);
   secondsElapsed = 0;
   updateTimerDisplay();
   timerInterval = setInterval(() => {
@@ -170,47 +185,56 @@ function stopTimer() {
 }
 
 function updateTimerDisplay() {
-  document.getElementById("timer").textContent = `⏱️ Time: ${formatTime(secondsElapsed)}`;
+  const timer = document.getElementById("timer");
+  if (timer) timer.textContent = `Time: ${formatTime(secondsElapsed)}`;
 }
 
-function formatTime(sec) {
-  const min = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${min.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+function formatTime(seconds) {
+  const mins = Math.floor(seconds / 60);
+  const secs = seconds % 60;
+  return `${mins}:${secs.toString().padStart(2, "0")}`;
 }
 
-function getKeyForBestScore() {
+function updateBestScore(time) {
   const size = document.getElementById("grid-size").value;
-  const mode = document.getElementById("mode").value;
-  return `best-${size}x${size}-${mode}`;
+  const key = `bestScore_${size}`;
+  const bestScore = localStorage.getItem(key);
+  if (!bestScore || time < bestScore) {
+    localStorage.setItem(key, time);
+  }
+  loadBestScore();
 }
 
 function loadBestScore() {
-  const key = getKeyForBestScore();
-  const best = localStorage.getItem(key);
-  document.getElementById("best-score").textContent =
-    best ? `🏆 Best Time: ${formatTime(parseInt(best))}` : `🏆 Best Time: --:--`;
+  const size = document.getElementById("grid-size").value;
+  const key = `bestScore_${size}`;
+  const bestScore = localStorage.getItem(key);
+  const bestScoreDisplay = document.getElementById("best-score");
+  if (bestScoreDisplay) {
+    bestScoreDisplay.textContent = bestScore ? `Best Time for ${size}x${size}: ${formatTime(bestScore)}` : `No best time yet for ${size}x${size}`;
+  }
 }
 
-function updateBestScore(currentTime) {
-  const key = getKeyForBestScore();
-  const best = localStorage.getItem(key);
-  if (!best || currentTime < parseInt(best)) {
-    localStorage.setItem(key, currentTime);
-    loadBestScore();
+function updateOverallBest(time) {
+  const key = `overallBest`;
+  const overallBest = localStorage.getItem(key);
+  if (!overallBest || time < overallBest) {
+    localStorage.setItem(key, time);
   }
+  loadOverallBest();
 }
 
 function loadOverallBest() {
-  const best = localStorage.getItem("overall-best");
-  document.getElementById("overall-best").textContent =
-    best ? `🌟 Overall Best: ${formatTime(parseInt(best))}` : `🌟 Overall Best: --:--`;
-}
-
-function updateOverallBest(currentTime) {
-  const best = localStorage.getItem("overall-best");
-  if (!best || currentTime < parseInt(best)) {
-    localStorage.setItem("overall-best", currentTime);
-    loadOverallBest();
+  const overallBest = localStorage.getItem("overallBest");
+  const overallBestDisplay = document.getElementById("overall-best");
+  if (overallBestDisplay) {
+    overallBestDisplay.textContent = overallBest ? `Overall Best Time: ${formatTime(overallBest)}` : "No overall best time yet";
   }
 }
+
+// Initialize game on page load
+window.onload = () => {
+  startGame();
+  document.getElementById("grid-size").addEventListener("change", startGame);
+  document.getElementById("mode").addEventListener("change", startGame);
+};
