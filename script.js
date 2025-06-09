@@ -37,9 +37,9 @@ const imageUrls = [
 ];
 
 // Sound effect files (make sure these paths are correct in your project)
-const clickSound = new Audio('/Users/ankitkumar/java_script/sound/click.mp3');
-const winSound = new Audio('/Users/ankitkumar/java_script/sound/win.mp3');
-const loseSound = new Audio('/Users/ankitkumar/java_script/sound/lose.mp3');
+const clickSound = new Audio('sound/click.mp3');
+const winSound = new Audio('sound/win.mp3');
+const loseSound = new Audio('sound/lose.mp3');
 
 function startGame() {
   const size = parseInt(document.getElementById("grid-size").value);
